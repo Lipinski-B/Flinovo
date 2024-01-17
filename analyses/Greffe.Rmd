@@ -1,0 +1,268 @@
+---
+title: "Signature Greffe"
+author: "LIPINSKI Boris"
+date: '2022-09-01'
+output:
+  rmdformats::robobook:
+    code_folding: hide
+    fig.width: 9
+    fig.height: 7
+    toc_depth: 3
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(cache.lazy = F)
+path <- "/media/boris/bae7e14e-21e5-48b8-80d6-f94583367b83"
+annotations <- read.csv(paste0(path,"/Rapport-RNAseq/annotation.csv"))
+source(file = paste0(path,"/Rapport-RNAseq/Functions.R"))
+options(digits = 3)
+
+condition <- "Condition" ; item1 <- "Pregreffe" ; item2 <- "Excipient" ; FC <- 1.189207 #FC <- 2.7185
+load(file = paste0(path,"/Flinovo/analyse_meta/All_Pre-greffe-Excipient_B.RData"))
+singlet@meta.data$Condition <- stringr::str_replace(singlet@meta.data$Condition, "Pré-greffe", "Pregreffe")
+DefaultAssay(singlet) <- "RNA" ; singlet <- noig(singlet) ; Idents(singlet) <- condition ; sc <- PB(singlet, condition)
+```
+
+```{r echo=F}
+sc.EdgeR0 <- EdgeR.Workflow(counts = sc$counts, metadata = sc$metadata, group = sc$metadata$Condition, FDR = 0.05,
+                           protocol = ~ Sample+Condition, FC = FC, custom = F, treat = T, glm = T, exact = F)
+```
+
+# DEG {.tabset}
+
+Cellule B uniquement + FC = 0.25
+ 
+
+## Pseudo-Bulk - les databases (union DB papiers) {.tabset}
+```{r echo=F, message=FALSE}
+load("/home/boris/Bureau/Flinovo/script/Signature/Greffe/DB/diss.gene.union")
+singlet@assays$RNA@data <- singlet@assays$RNA@data[rownames(singlet@assays$RNA@data)[!(rownames(singlet@assays$RNA@data) %in% diss.gene.union)],];
+singlet@assays$RNA@scale.data <- singlet@assays$RNA@scale.data[rownames(singlet@assays$RNA@scale.data)[!(rownames(singlet@assays$RNA@scale.data) %in% diss.gene.union)],];
+singlet@assays$RNA@counts <- singlet@assays$RNA@counts[rownames(singlet@assays$RNA@counts)[!(rownames(singlet@assays$RNA@counts) %in% diss.gene.union)],];
+
+sc <- PB(singlet, condition)
+sc.EdgeR <- EdgeR.Workflow(counts = sc$counts, metadata = sc$metadata, group = sc$metadata$Condition, FDR = 0.05,
+                           protocol = ~ Sample+Condition, FC = FC, custom = F, treat = T, glm = T, exact = F)
+```
+
+
+### Liste {.tabset}
+
+#### treat
+```{r echo=F}
+DE.Greffe.PB2 <- result(sc.EdgeR$treat$result) ; DT.table(DE.Greffe.PB2)
+DE.Greffe.PB2.raw <- sc.EdgeR$treat$result
+save(DE.Greffe.PB2.raw, file = "../Greffe/DE.Greffe.PB2.raw.Rdata")
+```
+
+#### Glm
+```{r echo=F}
+DE.Greffe.PB.Glm2 <- result(sc.EdgeR$glm$result) ; DT.table(DE.Greffe.PB.Glm2)
+```
+
+### Figures {.tabset}
+
+#### Clustering
+```{r echo=F, warning=F, fig.width=9, fig.height=8}
+Clustering(sc.EdgeR$treat)
+```
+
+#### PCA
+```{r echo=F}
+PCA_edger(sc.EdgeR$treat, position = 'right')
+```
+
+#### Top20 DEG
+```{r echo=F, warning=F, fig.width=10, fig.height=8}
+Top20(sc.EdgeR$treat,30)
+```
+
+#### Volcano {.tabset}
+
+##### treat
+```{r echo=F, warning=F, message=F}
+Volcano_plot(sc.EdgeR$treat, xscale = 4.5, yscale = 10, FC=log(FC), seuil=log(FC))
+```
+
+##### Glm
+```{r echo=F, warning=F, message=F}
+Volcano_plot(sc.EdgeR$glm, xscale = 4.5, yscale = 10, FC=log(FC), seuil=log(FC))
+```
+
+#### Heatmap {.tabset}
+
+##### treat
+```{r echo=F, fig.width=9, fig.height=11}
+col <- colnames(sc.EdgeR$treat[['y']])
+TopHeatmap(sc.EdgeR$treat, FDR=0.1, FC=0.5, cluster_cols = F)
+```
+
+##### Glm
+```{r echo=F, fig.width=9, fig.height=11}
+TopHeatmap(sc.EdgeR$glm, FDR=0.1, FC=0.5,cluster_cols = F)
+```
+
+#### Heatmap:Top {.tabset}
+
+##### treat
+```{r echo=F, fig.width=9, fig.height=11}
+TopHeatmap(sc.EdgeR$treat, FDR=0.1, row = F, FC=0.5, cluster_cols = F)
+```
+
+##### Glm
+```{r echo=F, fig.width=9, fig.height=11}
+TopHeatmap(sc.EdgeR$glm, FDR=0.1, row = F, FC=0.5, cluster_cols = F)
+```
+
+
+
+
+
+## Single-Cell {.tabset}
+
+### Liste
+
+```{r}
+item1 <- "Pregreffe"
+
+singlet <- NormalizeData(singlet, assay = "RNA")
+singlet <- ScaleData(singlet, features = rownames(singlet))
+DE.Greffe.SC <- FindMarkers(singlet, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data")
+
+DE.Greffe.SC.raw <- DE.Greffe.SC
+save(DE.Greffe.SC.raw, file = "../Greffe/DE.Greffe.SC.raw.Rdata")
+
+DE.Greffe.SC <- SC.Result(DE.Greffe.SC) ; DT.table(DE.Greffe.SC)
+```
+
+### Figure {.tabset}
+
+#### PCA
+
+```{r}
+Seurat::DimPlot(object = singlet, group.by = "Condition", label.size = 5, pt.size = 1,reduction = "pca", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet[["pca"]])[2],2), " %"))
+```
+
+#### Volcano
+
+```{r, warning=FALSE}
+SC.Volcano(DE.Greffe.SC, FC, yscale=350, seuil=0.25)
+```
+
+#### Heatmap
+
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet, features = DE.Greffe.SC$gene[1:200], group.by = "Condition", slot = "scale.data", assay = "integrated")
+```
+
+
+
+## Intersection {.tabset}
+
+### Liste
+```{r}
+DE.intersect <- left_join(DE.Greffe.SC,DE.Greffe.PB2,by = "gene")
+DE.intersect <- DE.intersect[DE.intersect$gene %in% intersect(DE.Greffe.SC$gene, DE.Greffe.PB2$gene),c("gene","p_val","PValue","logFC.x","logFC.y","FDR.x","FDR.y","description.y", "Expression.y")]
+colnames(DE.intersect) <- c('Gene','SC.p.value','PB.p.value','SC.logFC','PB.logFC','SC.FDR','PB.FDR',"Expression.", "Description")
+
+DT.table(DE.intersect)
+```
+
+
+### Venn Diagram {.tabset}
+
+#### Treat
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+x <- list(PseudoBulk = DE.Greffe.PB2$gene, SingleCell = DE.Greffe.SC$gene)
+ggVennDiagram(x, category.names = c("PseudoBulk","SingleCell"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("DE list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Glm
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+x <- list(PseudoBulk = DE.Greffe.PB.Glm2$gene, SingleCell = DE.Greffe.SC$gene)
+ggVennDiagram(x, category.names = c("PseudoBulk","SingleCell"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("DE list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+# Enrichissement {.tabset}
+
+## Pseudo-Bulk - les databases (union DB papiers) {.tabset}
+```{r}
+HM.Path<- gmtPathways("../other/gmt/h.all.v7.5.1.symbols.gmt")
+test   <- sc.EdgeR$treat
+table  <- test$tr$table
+ranks  <- table$logFC ; names(ranks) <- rownames(table)
+idx    <- ids2indices(HM.Path,identifiers=table$genes)
+```
+
+### Liste
+```{r}
+HM.FGSEA.Result <- fgsea(pathways = HM.Path, stats = ranks, minSize = 5) ; Path <- c(HM.FGSEA.Result[ES > 0][head(order(pval), n=10), pathway], rev(HM.FGSEA.Result[ES < 0][head(order(pval), n=10), pathway]))
+
+HM.FGSEA.Result.raw <- HM.FGSEA.Result
+save(HM.FGSEA.Result.raw, file = "../Greffe/HM.FGSEA.Result.raw.Rdata")
+
+HM.FGSEA.Result <- HM.FGSEA.Result %>% as_tibble() %>% dplyr::arrange(desc(abs(NES))) %>% dplyr::select(-ES) %>% dplyr::arrange(padj) %>% dplyr::mutate_if(is.double, round, 7) %>% rename(Hallmark = pathway) 
+HM.FGSEA.Result <- HM.FGSEA.Result[HM.FGSEA.Result$padj<0.05,]
+DT.table(HM.FGSEA.Result)
+```
+
+### EnrichPlot {.tabset}
+```{r, results='asis'}
+for(i in 1:length(HM.FGSEA.Result$Hallmark)){
+  cat("#### ", stringr::str_replace(HM.FGSEA.Result$Hallmark[i],"HALLMARK_",""), "\n\n")
+  print(plotEnrichment(HM.Path[[HM.FGSEA.Result$Hallmark[i]]], ranks) + labs(title=HM.FGSEA.Result$Hallmark[i])) ; cat("\n\n")
+}
+```
+
+
+## Single-cell
+```{r}
+ES <- enrichIt(obj = singlet, gene.sets = GS, groups = 1000, cores = 10, min.size = 5)
+save(ES, file = "../Greffe/ES.RDs")
+load(file = "../Greffe/ES.RDs")
+singlet <- AddMetaData(singlet, ES)
+singlet@meta.data$active.idents <- singlet@active.ident
+
+HM <- data.frame(singlet[[colnames(ES)]], Idents(singlet)) ; colnames(HM)[ncol(HM)] <- "Condition"
+HM.Result <- getSignificance(HM, group = "Condition", fit = "Wilcoxon") 
+HM.Result <- HM.Result[order(HM.Result$FDR),]
+HM.Result <- HM.Result[HM.Result$FDR<0.05,]
+
+HM.SC.Result0.raw <- HM.Result
+save(HM.SC.Result0.raw, file = "../Greffe/HM.SC.Result0.raw.Rdata")
+
+
+HM.SC.Result <- SC.Enrichissement(singlet, ES, condition) ; 
+DT.table(HM.SC.Result)
+```
+
+
+
+
+
+## Intersection {.tabset}
+
+### Liste
+```{r}
+HM.intersect <- left_join(HM.FGSEA.Result,HM.SC.Result,by = "Hallmark") 
+HM.intersect <- HM.intersect[HM.intersect$Hallmark %in% intersect(HM.FGSEA.Result$Hallmark, HM.SC.Result$Hallmark),c("Hallmark","p.value","FDR","pval","padj", "leadingEdge")] ; colnames(HM.intersect) <- c('Hallmark','SC.p.value','SC.FDR', 'PB.p.value','PB.FDR', 'PB.genes')
+
+DT.table(HM.intersect)
+```
+
+### Diagram
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+x <- list(PseudoBulk = as.vector(HM.FGSEA.Result$Hallmark), SingleCell = as.vector(HM.SC.Result$Hallmark))
+ggVennDiagram(x, category.names = c("PseudoBulk","SingleCell"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("Hallmark list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```

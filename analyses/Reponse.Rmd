@@ -1,0 +1,357 @@
+---
+title: "Effet Réponse"
+author: "LIPINSKI Boris"
+date: '2022-07-25'
+output:
+  rmdformats::robobook:
+    code_folding: hide
+    fig.width: 12
+    fig.height: 10
+    toc_depth: 3
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache = F)
+path <- "/media/boris/bae7e14e-21e5-48b8-80d6-f94583367b83/"
+source(file = paste0(path,"/Rapport-RNAseq/Functions.R"))
+#source(file = "/home/boris/Bureau/Flinovo/fonction/library.R")
+options(digits = 3)
+
+condition <- "Reponse" ; item1 <- "RP" ; item2 <- "RC" ; FC <- 1.189207 ; load("/home/boris/Bureau/Flinovo/script/Signature/Greffe/DB/diss.gene.union")
+
+# Load Excipient
+load(file = paste0(path,"/Flinovo/analyse_meta/All_Excipient_All.RData"))
+DefaultAssay(singlet) <- "RNA" ; singlet <- noig(singlet) ; Idents(singlet) <- condition ;
+
+singlet@assays$RNA@data <- singlet@assays$RNA@data[rownames(singlet@assays$RNA@data)[!(rownames(singlet@assays$RNA@data) %in% diss.gene.union)],];
+singlet@assays$RNA@scale.data <- singlet@assays$RNA@scale.data[rownames(singlet@assays$RNA@scale.data)[!(rownames(singlet@assays$RNA@scale.data) %in% diss.gene.union)],];
+singlet@assays$RNA@counts <- singlet@assays$RNA@counts[rownames(singlet@assays$RNA@counts)[!(rownames(singlet@assays$RNA@counts) %in% diss.gene.union)],];
+
+singlet.exp <- singlet
+
+# Load Pré-greffe
+load(file = paste0(path,"/Flinovo/analyse_meta/All_Pre-greffe_All.RData"))
+DefaultAssay(singlet) <- "RNA" ; singlet <- noig(singlet) ; Idents(singlet) <- condition ;
+
+singlet@assays$RNA@data <- singlet@assays$RNA@data[rownames(singlet@assays$RNA@data)[!(rownames(singlet@assays$RNA@data) %in% diss.gene.union)],];
+singlet@assays$RNA@scale.data <- singlet@assays$RNA@scale.data[rownames(singlet@assays$RNA@scale.data)[!(rownames(singlet@assays$RNA@scale.data) %in% diss.gene.union)],];
+singlet@assays$RNA@counts <- singlet@assays$RNA@counts[rownames(singlet@assays$RNA@counts)[!(rownames(singlet@assays$RNA@counts) %in% diss.gene.union)],];
+
+singlet.pg <- singlet
+
+# Load RCHOP
+load(file = paste0(path,"/Flinovo/analyse_meta/All_RCHOP_All.RData"))
+DefaultAssay(singlet) <- "RNA" ; singlet <- noig(singlet) ; Idents(singlet) <- condition ;
+
+singlet@assays$RNA@data <- singlet@assays$RNA@data[rownames(singlet@assays$RNA@data)[!(rownames(singlet@assays$RNA@data) %in% diss.gene.union)],];
+singlet@assays$RNA@scale.data <- singlet@assays$RNA@scale.data[rownames(singlet@assays$RNA@scale.data)[!(rownames(singlet@assays$RNA@scale.data) %in% diss.gene.union)],];
+singlet@assays$RNA@counts <- singlet@assays$RNA@counts[rownames(singlet@assays$RNA@counts)[!(rownames(singlet@assays$RNA@counts) %in% diss.gene.union)],];
+```
+
+
+# Effet de la réponse dans toutes les cellules
+
+## 1. Liste des gènes différentiellement exprimés {.tabset}
+
+### RCHOP 
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+singlet <- NormalizeData(singlet, assay = "RNA")
+singlet <- ScaleData(singlet, features = rownames(singlet))
+response <- FindMarkers(singlet, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod")
+
+response.RCHOP <- response
+save(response.RCHOP, file = "../Reponse/response.RCHOP.raw.Rdata")
+
+response <- SC.Result(response)
+
+DT.table(response)
+
+# ES <- enrichIt(obj = singlet, gene.sets = GS, groups = 1000, cores = 8, min.size = 5)
+# save(ES, file = "../Reponse/RCHOP_ES.RDs")
+```
+
+### Excipient
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+singlet.exp <- NormalizeData(singlet.exp, assay = "RNA")
+singlet.exp <- ScaleData(singlet.exp, features = rownames(singlet.exp))
+response.exp <- FindMarkers(singlet.exp, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod")
+
+
+save(response.exp, file = "../Reponse/response.exp.raw.Rdata")
+
+response.exp <- SC.Result(response.exp)
+
+DT.table(response.exp)
+
+# ES <- enrichIt(obj = singlet.exp, gene.sets = GS, groups = 1000, cores = 10, min.size = 5)
+# save(ES, file = "../Reponse/Excipient_ES.RDs")
+```
+
+### Pré-greffe
+```{r, message=FALSE, warning=FALSE, error=FALSE}
+singlet.pg <- NormalizeData(singlet.pg, assay = "RNA")
+singlet.pg <- ScaleData(singlet.pg, features = rownames(singlet.pg))
+response.pg <- FindMarkers(singlet.pg, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod")
+
+save(response.pg, file = "../Reponse/response.pg.raw.Rdata")
+
+response.pg <- SC.Result(response.pg)
+
+
+
+
+DT.table(response.pg)
+
+ES <- enrichIt(obj = singlet.pg, gene.sets = GS, groups = 1000, cores = 10, min.size = 5)
+save(ES, file = "../Reponse/Pre-greffe_ES.RDs")
+```
+
+
+## 2. Enrichissement {.tabset}
+
+### RCHOP 
+```{r}
+load(file = "../Reponse/RCHOP_ES.RDs")
+
+singlet <- AddMetaData(singlet, ES)
+singlet@meta.data$active.idents <- singlet@active.ident
+
+HM <- data.frame(singlet[[colnames(ES)]], Idents(singlet)) ; colnames(HM)[ncol(HM)] <- condition
+HM.Result <- getSignificance(HM, group = condition, fit = "Wilcoxon") 
+HM.Result <- HM.Result[order(HM.Result$FDR),]
+HM.Result <- HM.Result[HM.Result$FDR<0.05,]
+
+HM.SC.Result.raw.RCHOP <- HM.Result
+save(HM.SC.Result.raw.RCHOP, file = "../Reponse/HM.SC.Result.raw.RCHOP.Rdata")
+
+
+HM.RCHOP.Result <- SC.Enrichissement(singlet, ES, condition)
+DT.table(HM.RCHOP.Result)
+```
+
+
+### Excipient 
+```{r}
+load(file = "../Reponse/Excipient_ES.RDs")
+
+singlet.exp <- AddMetaData(singlet.exp, ES)
+singlet.exp@meta.data$active.idents <- singlet.exp@active.ident
+
+HM <- data.frame(singlet.exp[[colnames(ES)]], Idents(singlet.exp)) ; colnames(HM)[ncol(HM)] <- condition
+HM.Result <- getSignificance(HM, group = condition, fit = "Wilcoxon") 
+HM.Result <- HM.Result[order(HM.Result$FDR),]
+HM.Result <- HM.Result[HM.Result$FDR<0.05,]
+
+HM.SC.Result.raw.Excipient <- HM.Result
+save(HM.SC.Result.raw.Excipient, file = "../Reponse/HM.SC.Result.raw.Excipient.Rdata")
+
+
+HM.Excipient.Result <- SC.Enrichissement(singlet.exp, ES, condition)
+DT.table(HM.Excipient.Result)
+```
+
+
+### Pré-greffe 
+```{r}
+load(file = "../Reponse/Pre-greffe_ES.RDs")
+
+singlet.pg <- AddMetaData(singlet.pg, ES)
+singlet.pg@meta.data$active.idents <- singlet.pg@active.ident
+
+HM <- data.frame(singlet.pg[[colnames(ES)]], Idents(singlet.pg)) ; colnames(HM)[ncol(HM)] <- condition
+HM.Result <- getSignificance(HM, group = condition, fit = "Wilcoxon") 
+HM.Result <- HM.Result[order(HM.Result$FDR),]
+HM.Result <- HM.Result[HM.Result$FDR<0.05,]
+
+HM.SC.Result.raw.PG <- HM.Result
+save(HM.SC.Result.raw.PG, file = "../Reponse/HM.SC.Result.raw.PG.Rdata")
+
+HM.PG.Result <- SC.Enrichissement(singlet.pg, ES, condition)
+DT.table(HM.PG.Result)
+```
+
+
+## Intersection {.tabset}
+
+### Diagram
+
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+x <- list(PG = as.vector(HM.PG.Result$Hallmark), RCHOP = as.vector(HM.RCHOP.Result$Hallmark), Excipient = as.vector(HM.Excipient.Result$Hallmark))
+ggVennDiagram(x, category.names = c("Pré-greffe","RCHOP","Excipient"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("Hallmark list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+### Liste
+
+```{r}
+Reduce(intersect, list(HM.PG.Result$Hallmark,HM.RCHOP.Result$Hallmark,HM.Excipient.Result$Hallmark))
+```
+
+
+## 3. Figures {.tabset}
+
+
+### RCHOP {.tabset}
+
+#### PCA
+```{r}
+Seurat::DimPlot(object = singlet, group.by = condition, label.size = 5, pt.size = 1,reduction = "pca", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet[["pca"]])[2],2), " %"))
+```
+
+#### Volcano plot
+```{r, warning=FALSE}
+SC.Volcano(response, FC)
+```
+
+#### Heatmap {.tabset}
+
+##### Reponse
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet, features = response$gene[1:50], group.by = condition, assay = "RNA")
+```
+
+##### Sample
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet, features = response$gene[1:50], group.by = "Sample", assay = "RNA")
+```
+
+
+### Excipient {.tabset}
+
+#### PCA
+```{r}
+Seurat::DimPlot(object = singlet.exp, group.by = condition, label.size = 5, pt.size = 1,reduction = "pca", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet.exp[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet.exp[["pca"]])[2],2), " %"))
+```
+
+#### Volcano plot
+```{r, warning=FALSE}
+SC.Volcano(response.exp, FC)
+```
+
+#### Heatmap {.tabset}
+
+##### Reponse
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet.exp, features = response.exp$gene[1:50], group.by = condition, assay = "RNA")
+```
+
+##### Sample
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet.exp, features = response.exp$gene[1:50], group.by = "Sample", assay = "RNA")
+```
+
+
+
+### Pré-greffe {.tabset}
+
+#### PCA
+```{r}
+Seurat::DimPlot(object = singlet.pg, group.by = condition, label.size = 5, pt.size = 1,reduction = "pca", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet.pg[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet.pg[["pca"]])[2],2), " %"))
+```
+
+#### Volcano plot
+```{r, warning=FALSE}
+SC.Volcano(response.pg, FC)
+```
+
+#### Heatmap {.tabset}
+
+##### Reponse
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet.pg, features = response.pg$gene[1:50], group.by = condition, assay = "RNA")
+```
+
+##### Sample
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet.pg, features = response.pg$gene[1:50], group.by = "Sample", assay = "RNA")
+```
+
+
+
+
+
+## 4. Genes up-régulés  {.tabset}
+
+### RCHOP {.tabset}
+
+#### RP
+```{r}
+RP.up.RCHOP <- FindMarkers(singlet, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod", only.pos = T)
+RP.up.RCHOP <- SC.Result(RP.up.RCHOP)
+DT.table(RP.up.RCHOP)
+```
+
+#### RC
+```{r}
+RC.up.RCHOP <- FindMarkers(singlet, ident.1 = item2, ident.2 = item1 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod", only.pos = T)
+RC.up.RCHOP <- SC.Result(RC.up.RCHOP)
+DT.table(RC.up.RCHOP)
+rm(singlet) ; gc(); gc(); gc(); gc(); 
+``` 
+
+
+### Excipient {.tabset}
+
+#### RP
+```{r}
+RP.up.Excipient <- FindMarkers(singlet.exp, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod", only.pos = T)
+RP.up.Excipient <- SC.Result(RP.up.Excipient)
+DT.table(RP.up.Excipient)
+```
+
+#### RC
+```{r}
+RC.up.Excipient <- FindMarkers(singlet.exp, ident.1 = item2, ident.2 = item1 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod", only.pos = T)
+RC.up.Excipient <- SC.Result(RC.up.Excipient)
+DT.table(RC.up.Excipient)
+rm(singlet.exp) ; gc(); gc(); gc(); gc(); 
+``` 
+
+
+
+### Pré-greffe {.tabset}
+
+#### RP
+```{r}
+RP.up.PG <- FindMarkers(singlet.pg, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod", only.pos = T)
+RP.up.PG <- SC.Result(RP.up.PG)
+DT.table(RP.up.PG)
+```
+
+#### RC
+```{r}
+RC.up.PG <- FindMarkers(singlet.pg, ident.1 = item2, ident.2 = item1 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod", only.pos = T)
+RC.up.PG <- SC.Result(RC.up.PG)
+DT.table(RC.up.PG)
+rm(singlet.pg) ; gc(); gc(); gc(); gc(); 
+``` 
+
+
+
+
+## 5. Tableaux de synthèse
+
+```{r}
+synthese <- data.frame(row.names = c('Excipient', 'RCHOP', 'Pré-Greffe'),
+  DEG = c(length(response.exp$gene), length(response$gene),length(response.pg$gene)),
+  UP = c(length(RC.up.Excipient$gene), length(RC.up.RCHOP$gene), length(RC.up.PG$gene)),
+  DOWN = c(length(RP.up.Excipient$gene), length(RP.up.RCHOP$gene), length(RP.up.PG$gene))
+)
+
+DT::datatable(t(synthese), class = 'cell-border stripe')
+```
+
+
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+library(ggVennDiagram)
+x <- list(RCHOP = response$gene, Pregreffe = response.pg$gene, Excipient = response.exp$gene)
+ggVennDiagram(x, category.names = c("RCHOP","Pré-greffe", "Excipient"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("DE list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```

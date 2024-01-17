@@ -1,0 +1,312 @@
+---
+title: "Signature RCHOP"
+author: "LIPINSKI Boris"
+date: '2022-09-01'
+output:
+  rmdformats::robobook:
+    code_folding: hide
+    fig.width: 9
+    fig.height: 7
+    toc_depth: 3
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(cache = F)
+path <- "/media/boris/bae7e14e-21e5-48b8-80d6-f94583367b83"
+annotations <- read.csv(paste0(path,"/Rapport-RNAseq/annotation.csv"))
+source(file = paste0(path,"/Rapport-RNAseq/Functions.R"))
+options(digits = 3)
+```
+
+```{r echo=F, include=F}
+condition <- "Condition" ; item1 <- "RCHOP" ; item2 <- "Excipient" ; FC <- 1.109569
+load(file = paste0(path,"/Flinovo/analyse_meta/All_Post-greffe_B.RData"))
+DefaultAssay(singlet) <- "RNA" ; singlet <- noig(singlet) ; Idents(singlet) <- condition ; sc <- PB(singlet, condition)
+sc.EdgeR <- EdgeR.Workflow(counts = sc$counts, metadata = sc$metadata, group = sc$metadata$Condition, FDR = 0.05,
+                           protocol = ~ Sample+Condition, FC = FC, custom = T, treat = T, glm = T, exact = F)
+```
+
+# DEG {.tabset}
+
+Cellule B uniquement + FC = 0.1
+
+## Pseudo-Bulk {.tabset}
+
+### Liste  {.tabset}
+
+#### treat
+```{r echo=F}
+DE.RCHOP.PB <- result(sc.EdgeR$treat$result) ; DT.table(DE.RCHOP.PB)
+
+DE.RCHOP.PB.raw <- sc.EdgeR$treat$tr$table
+save(DE.RCHOP.PB.raw, file = "../RCHOP/DE.RCHOP.PB.raw.Rdata")
+```
+
+#### Glm 
+```{r echo=F}
+DE.RCHOP.PB.Glm <- result(sc.EdgeR$glm$result) ; DT.table(DE.RCHOP.PB.Glm)
+```
+
+
+### Figures {.tabset}
+
+#### Clustering
+```{r echo=F, warning=F, fig.width=9, fig.height=8}
+Clustering(sc.EdgeR$treat)
+```
+
+#### PCA
+```{r echo=F}
+PCA_edger(sc.EdgeR$treat)
+```
+
+#### Top20 DEG
+```{r echo=F, warning=F, fig.width=10, fig.height=8}
+Top20(sc.EdgeR$treat,30)
+```
+
+
+#### Volcano {.tabset}
+
+##### treat
+```{r echo=F, warning=F, message=F}
+Volcano_plot(sc.EdgeR$treat, xscale = 1, yscale = 6, FC=log(FC), seuil=log(FC))
+```
+
+##### Glm
+```{r echo=F, warning=F, message=F}
+Volcano_plot(sc.EdgeR$glm, xscale = 1, yscale = 6, FC=log(FC), seuil=log(FC))
+```
+
+
+#### Heatmap {.tabset}
+
+##### treat
+```{r echo=F, fig.width=9, fig.height=11}
+col <- c("FL02G095Excipient","FL08G0293Excipient", "FL05G0330Excipient","FL06G1206Excipient","FL08G0404Excipient","FL08G0431Excipient","FL09C1164Excipient","FL12C1888Excipient", "FL140304Excipient", "FL120212Excipient" , "FL05G0305Excipient","FL06G1535Excipient", "FL180250BExcipient", "FL190383BExcipient","FL06G1206RCHOP","FL08G0293RCHOP","FL02G095RCHOP","FL08G0404RCHOP","FL08G0431RCHOP","FL09C1164RCHOP","FL12C1888RCHOP","FL140304RCHOP", "FL120212RCHOP" , "FL05G0305RCHOP", "FL06G1535RCHOP" , "FL180250BRCHOP", "FL190383BRCHOP")
+TopHeatmap(sc.EdgeR$treat, FDR=0.1, FC=0.5, cluster_cols = F)
+```
+
+##### Glm
+```{r echo=F, fig.width=9, fig.height=11}
+TopHeatmap(sc.EdgeR$glm, FDR=0.1, FC=0.5, cluster_cols = F)
+```
+
+
+
+## Single-cell {.tabset}
+
+### Liste
+```{r, cache=F}
+singlet <- NormalizeData(singlet, assay = "RNA")
+singlet <- ScaleData(singlet, features = rownames(singlet))
+```
+
+
+```{r}
+DE.RCHOP.SC <- FindMarkers(singlet, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data", test.use = "bimod")
+
+DE.RCHOP.SC.raw <- DE.RCHOP.SC
+save(DE.RCHOP.SC.raw, file = "../RCHOP/DE.RCHOP.SC.raw.Rdata")
+
+DE.RCHOP.SC <- SC.Result(DE.RCHOP.SC)
+DT.table(DE.RCHOP.SC)
+```
+
+
+### Figures {.tabset}
+
+#### PCA
+```{r}
+Seurat::DimPlot(object = singlet, group.by = "Condition", label.size = 5, pt.size = 1,reduction = "pca", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet[["pca"]])[2],2), " %"))
+```
+
+#### Volcano
+```{r, warning=FALSE}
+SC.Volcano(DE.RCHOP.SC, FC)
+```
+
+#### Heatmap
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet, features = DE.RCHOP.SC$gene, group.by = "Condition", slot = "scale.data", assay = "integrated")
+```
+
+
+
+## Intersection {.tabset}
+
+### Liste
+```{r}
+DE.intersect <- left_join(DE.RCHOP.SC,DE.RCHOP.PB,by = "gene")
+DE.intersect <- DE.intersect[DE.intersect$gene %in% intersect(DE.RCHOP.SC$gene, DE.RCHOP.PB$gene),c("gene","p_val","PValue","logFC.x","logFC.y","FDR.x","FDR.y","description.y", "Expression.y")]
+colnames(DE.intersect) <- c('Gene','SC.p.value','PB.p.value','SC.logFC','PB.logFC','SC.FDR','PB.FDR',"Expression.", "Description")
+
+DT.table(DE.intersect)
+```
+
+### Diagram {.tabset}
+
+#### Treat
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+x <- list(PseudoBulk = DE.RCHOP.PB$gene, SingleCell = DE.RCHOP.SC$gene)
+ggVennDiagram(x, category.names = c("PseudoBulk","SingleCell"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("DE list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+#### Glm
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+x <- list(PseudoBulk = DE.RCHOP.PB.Glm$gene, SingleCell = DE.RCHOP.SC$gene)
+ggVennDiagram(x, category.names = c("PseudoBulk","SingleCell"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("DE list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+# Enrichissement {.tabset}
+
+## Pseudo-Bulk : FGSEA {.tabset}
+```{r}
+test   <- sc.EdgeR$treat
+table  <- test$tr$table
+HM.Path<- gmtPathways("../other/gmt/h.all.v7.5.1.symbols.gmt")
+ranks  <- table$logFC ; names(ranks) <- rownames(table)
+```
+
+### Liste 
+```{r}
+HM.FGSEA.Result <- fgsea(pathways = HM.Path, stats = ranks, minSize = 5) ; Path <- c(HM.FGSEA.Result[ES > 0][head(order(pval), n=10), pathway], rev(HM.FGSEA.Result[ES < 0][head(order(pval), n=10), pathway]))
+
+HM.FGSEA.Result.raw <- HM.FGSEA.Result
+save(HM.FGSEA.Result.raw, file = "../RCHOP/HM.FGSEA.Result.raw.Rdata")
+
+HM.FGSEA.Result <- HM.FGSEA.Result %>% as_tibble() %>% dplyr::arrange(desc(abs(NES))) %>% dplyr::select(-ES) %>% dplyr::arrange(padj) %>% dplyr::mutate_if(is.double, round, 7) %>% rename(Hallmark = pathway) 
+HM.FGSEA.Result <- HM.FGSEA.Result[HM.FGSEA.Result$padj<0.05,]
+DT.table(HM.FGSEA.Result)
+```
+
+### EnrichPlot {.tabset}
+```{r, results='asis'}
+for(i in 1:length(HM.FGSEA.Result$Hallmark)){
+  cat("#### ", stringr::str_replace(HM.FGSEA.Result$Hallmark[i],"HALLMARK_",""), "\n\n")
+  print(plotEnrichment(HM.Path[[HM.FGSEA.Result$Hallmark[i]]], ranks) + labs(title=HM.FGSEA.Result$Hallmark[i])) ; cat("\n\n")
+}
+```
+
+
+## Single-Cell
+```{r}
+#ES <- enrichIt(obj = singlet, gene.sets = GS, groups = 1000, cores = 10, min.size = 5) ; save(ES, file = "../RCHOP/ES.RDs")
+load(file = "../RCHOP/ES.RDs")
+
+singlet <- AddMetaData(singlet, ES)
+singlet@meta.data$active.idents <- singlet@active.ident
+
+HM <- data.frame(singlet[[colnames(ES)]], Idents(singlet)) ; colnames(HM)[ncol(HM)] <- "Condition"
+HM.Result <- getSignificance(HM, group = "Condition", fit = "Wilcoxon") 
+HM.Result <- HM.Result[order(HM.Result$FDR),]
+HM.Result <- HM.Result[HM.Result$FDR<0.05,]
+
+HM.SC.Result.raw <- HM.Result
+save(HM.SC.Result.raw, file = "../RCHOP/HM.SC.Result.raw.Rdata")
+
+
+HM.SC.Result <- SC.Enrichissement(singlet, ES, condition) ; DT.table(HM.SC.Result)
+```
+
+
+## Intersection {.tabset}
+
+### Liste
+```{r}
+HM.intersect <- left_join(HM.FGSEA.Result,HM.SC.Result,by = "Hallmark") 
+HM.intersect <- HM.intersect[HM.intersect$Hallmark %in% intersect(HM.FGSEA.Result$Hallmark, HM.SC.Result$Hallmark),c("Hallmark","p.value","FDR","pval","padj", "leadingEdge")] ; colnames(HM.intersect) <- c('Hallmark','SC.p.value','SC.FDR', 'PB.p.value','PB.FDR', 'PB.genes')
+DT.table(HM.intersect)
+```
+
+### Diagram
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+x <- list(PseudoBulk = as.vector(HM.FGSEA.Result$Hallmark), SingleCell = as.vector(HM.SC.Result$Hallmark))
+ggVennDiagram(x, category.names = c("PseudoBulk","SingleCell"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("Hallmark list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
+# Pompe à efflux {.tabset}
+
+## By gene {.tabset}
+```{r, warning=FALSE, results='asis'}
+Singature_RCHOP <- c("ABCB1", "ABCG2")
+for(i in 1:length(Singature_RCHOP)){
+  cat("### ", Singature_RCHOP[i], "\n\n")
+  print(VlnPlot(singlet, features = Singature_RCHOP[i], group.by = condition, slot = "data", assay = "RNA") & Seurat::NoLegend() & theme(axis.title.x = element_blank(), axis.title.y = element_blank())) ; cat("\n\n")
+}
+```
+
+## By patient {.tabset}
+```{r,warning=FALSE, results='asis'}
+for(i in 1:length(Singature_RCHOP)){
+  cat("### ", Singature_RCHOP[i], "\n\n")
+  print(VlnPlot(singlet, features = Singature_RCHOP[i], group.by = "Sample", split.by = "Condition", assay = "RNA", slot = "data") & Seurat::NoLegend() ) ; cat("\n\n")
+}
+```
+
+## FeaturePlot {.tabset}
+```{r, warning=FALSE, results='asis'}
+for(i in 1:length(Singature_RCHOP)){
+  cat("### ", Singature_RCHOP[i], "\n\n")
+  print(Seurat::FeaturePlot(object = singlet, features = Singature_RCHOP[i], label.size = 5, pt.size = 0.7,reduction = "umap", label = F) ) ; cat("\n\n")
+}
+```
+
+## DimPlot
+```{r}
+Seurat::DimPlot(object = singlet, group.by = "Condition", label.size = 5, pt.size = 0.7 ,reduction = "umap", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet[["pca"]])[2],2), " %"))
+```
+
+
+
+
+
+# 24-RCHOP signature
+
+## Expression {.tabset}
+
+### By gene {.tabset}
+```{r, warning=FALSE, results='asis'}
+#Singature_RCHOP <- c("BAX","RPS27L","PHPT1","SRSF3","PSMB4","HIST1H2BK","TRIM22","AEN","PVT1","FDXR","BBC3","SRSF2","MRFAP1","DDB2","EIF2S3","MDM2","HNRNPH1","CHI3L2","CCNG1","LY86","ZMAT3","TXNIP","CD70","SNHG8","P4HA1","CDKN1A","ISG15")
+Singature_RCHOP <- c("RPS19","BAX", "PSMB4","PHPT1","RPS27L","SRSF3","HIST1H2BK", "TRIM22","FDXR","MRFAP1","LY86","PVT1","DDB2","AEN","PQBP1","CD70","BBC3","HNRNPH1","SRSF2","CDKN1A","MT2A")
+for(i in 1:length(Singature_RCHOP)){
+  cat("#### ", Singature_RCHOP[i], "\n\n")
+  print(VlnPlot(singlet, features = Singature_RCHOP[i], group.by = condition, slot = "data", assay = "RNA") & Seurat::NoLegend() & theme(axis.title.x = element_blank(), axis.title.y = element_blank())) ; cat("\n\n")
+}
+```
+
+### By patient
+```{r}
+rm(singlet)
+load(file = paste0(path,"/Flinovo/analyse_meta/All_RCHOP_B.RData"))
+DefaultAssay(singlet) <- "RNA" ; singlet <- noig(singlet) ; Idents(singlet) <- condition ;
+singlet <- NormalizeData(singlet, assay = "RNA")
+singlet <- ScaleData(singlet, features = rownames(singlet))
+singlet <- AddModuleScore(singlet,features = list(Singature_RCHOP), ctrl=100, replace =T, name="RCHOP_RNA_Score", assay = "RNA")
+Idents(singlet) <- "Sample" 
+VlnPlot(singlet, features = "RCHOP_RNA_Score1", group.by = "Sample",  assay = "RNA", slot = "data") & Seurat::NoLegend()
+```
+
+### FeaturePlot
+```{r}
+Seurat::FeaturePlot(object = singlet, features = "RCHOP_RNA_Score1", label.size = 5, pt.size = 0.7,reduction = "umap", label = F)
+```
+
+### DimPlot
+```{r}
+Seurat::DimPlot(object = singlet, group.by = "Condition", label.size = 5, pt.size = 0.7 ,reduction = "umap", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet[["pca"]])[2],2), " %"))
+```

@@ -1,6 +1,0 @@
-library(plotly)
-library(shiny)
-library(shinyWidgets)
-library(shinydashboard)
-library(tidyverse)
-library(RCurl)
