@@ -1,0 +1,22 @@
+NAME	SYMBOL	TITLE	RANK IN GENE LIST	RANK METRIC SCORE	RUNNING ES	CORE ENRICHMENT	
+row_0	TXN	thioredoxin [Source:HGNC Symbol;Acc:HGNC:12435]	41	0.4121802747249603	0.0014342266	No	
+row_1	POLR3K	RNA polymerase III subunit K [Source:HGNC Symbol;Acc:HGNC:14121]	47	0.3944126069545746	0.05555337	No	
+row_2	FKBP4	FKBP prolyl isomerase 4 [Source:HGNC Symbol;Acc:HGNC:3720]	56	0.3719974756240845	0.1015365	No	
+row_3	LDHA	lactate dehydrogenase A [Source:HGNC Symbol;Acc:HGNC:6535]	122	0.28413569927215576	0.04592005	No	
+row_4	BIK	BCL2 interacting killer [Source:HGNC Symbol;Acc:HGNC:1051]	139	0.2675652503967285	0.063207	No	
+row_5	COPB2	COPI coat complex subunit beta 2 [Source:HGNC Symbol;Acc:HGNC:2232]	148	0.2568521797657013	0.09114135	No	
+row_6	ENO1	enolase 1 [Source:HGNC Symbol;Acc:HGNC:3350]	161	0.24656346440315247	0.11129964	No	
+row_7	TALDO1	transaldolase 1 [Source:HGNC Symbol;Acc:HGNC:11559]	177	0.23779848217964172	0.12546155	No	
+row_8	PSMC4	"proteasome 26S subunit, ATPase 4 [Source:HGNC Symbol;Acc:HGNC:9551]"	223	0.21190860867500305	0.08934031	No	
+row_9	PKM	pyruvate kinase M1/2 [Source:HGNC Symbol;Acc:HGNC:9021]	258	0.19674569368362427	0.06779147	No	
+row_10	SDHC	succinate dehydrogenase complex subunit C [Source:HGNC Symbol;Acc:HGNC:10682]	274	0.18396982550621033	0.073515855	No	
+row_11	TPI1	triosephosphate isomerase 1 [Source:HGNC Symbol;Acc:HGNC:12009]	296	0.17168095707893372	0.06806899	No	
+row_12	PGK1	phosphoglycerate kinase 1 [Source:HGNC Symbol;Acc:HGNC:8896]	297	0.1715296357870102	0.09495588	No	
+row_13	UGP2	UDP-glucose pyrophosphorylase 2 [Source:HGNC Symbol;Acc:HGNC:12527]	313	0.16239705681800842	0.09729878	No	
+row_14	MDH1	malate dehydrogenase 1 [Source:HGNC Symbol;Acc:HGNC:6970]	318	0.15950025618076324	0.11613676	No	
+row_15	HAX1	HCLS1 associated protein X-1 [Source:HGNC Symbol;Acc:HGNC:16915]	329	0.15250107645988464	0.12463265	No	
+row_16	SOD1	superoxide dismutase 1 [Source:HGNC Symbol;Acc:HGNC:11179]	343	0.1301509290933609	0.1250027	No	
+row_17	LHPP	phospholysine phosphohistidine inorganic pyrophosphate phosphatase [Source:HGNC Symbol;Acc:HGNC:30042]	413	-0.21644049882888794	0.052611854	No	
+row_18	B4GALT1	"beta-1,4-galactosyltransferase 1 [Source:HGNC Symbol;Acc:HGNC:924]"	604	-0.5879313349723816	-0.1479893	Yes	
+row_19	DDIT4	DNA damage inducible transcript 4 [Source:HGNC Symbol;Acc:HGNC:24944]	622	-0.6398857831954956	-0.07388277	Yes	
+row_20	CITED2	Cbp/p300 interacting transactivator with Glu/Asp rich carboxy-terminal domain 2 [Source:HGNC Symbol;Acc:HGNC:1987]	649	-0.9235280752182007	0.03081657	Yes	

@@ -1,0 +1,18 @@
+NAME	SYMBOL	TITLE	RANK IN GENE LIST	RANK METRIC SCORE	RUNNING ES	CORE ENRICHMENT	
+row_0	PDCD4	programmed cell death 4 [Source:HGNC Symbol;Acc:HGNC:8763]	28	0.464259535074234	0.047836922	Yes	
+row_1	PRDX3	peroxiredoxin 3 [Source:HGNC Symbol;Acc:HGNC:9354]	60	0.3577108085155487	0.07026013	Yes	
+row_2	MRPL15	mitochondrial ribosomal protein L15 [Source:HGNC Symbol;Acc:HGNC:14054]	61	0.356591135263443	0.13993774	Yes	
+row_3	DECR1	"2,4-dienoyl-CoA reductase 1 [Source:HGNC Symbol;Acc:HGNC:2753]"	113	0.2949018180370331	0.119460255	Yes	
+row_4	NDUFAB1	NADH:ubiquinone oxidoreductase subunit AB1 [Source:HGNC Symbol;Acc:HGNC:7694]	134	0.2748112976551056	0.14253029	Yes	
+row_5	SUCLG1	succinate-CoA ligase GDP/ADP-forming subunit alpha [Source:HGNC Symbol;Acc:HGNC:11449]	175	0.2391403168439865	0.12800238	Yes	
+row_6	TALDO1	transaldolase 1 [Source:HGNC Symbol;Acc:HGNC:11559]	177	0.23779848217964172	0.1729366	Yes	
+row_7	ACADM	acyl-CoA dehydrogenase medium chain [Source:HGNC Symbol;Acc:HGNC:89]	233	0.20777496695518494	0.12930903	Yes	
+row_8	NDUFS3	NADH:ubiquinone oxidoreductase core subunit S3 [Source:HGNC Symbol;Acc:HGNC:7710]	246	0.20077675580978394	0.15016392	Yes	
+row_9	DHRS7	dehydrogenase/reductase 7 [Source:HGNC Symbol;Acc:HGNC:21524]	264	0.18932290375232697	0.16112377	Yes	
+row_10	SDHC	succinate dehydrogenase complex subunit C [Source:HGNC Symbol;Acc:HGNC:10682]	274	0.18396982550621033	0.18328878	Yes	
+row_11	GHITM	growth hormone inducible transmembrane protein [Source:HGNC Symbol;Acc:HGNC:17281]	317	0.16009105741977692	0.15025191	No	
+row_12	SOD1	superoxide dismutase 1 [Source:HGNC Symbol;Acc:HGNC:11179]	343	0.1301509290933609	0.13739847	No	
+row_13	DRAM2	DNA damage regulated autophagy modulator 2 [Source:HGNC Symbol;Acc:HGNC:28769]	402	-0.20176945626735687	0.088003226	No	
+row_14	BCL6	BCL6 transcription repressor [Source:HGNC Symbol;Acc:HGNC:1001]	561	-0.4326047897338867	-0.06942634	No	
+row_15	G3BP2	G3BP stress granule assembly factor 2 [Source:HGNC Symbol;Acc:HGNC:30291]	598	-0.5561306476593018	-0.015889024	No	
+row_16	DNAJB9	DnaJ heat shock protein family (Hsp40) member B9 [Source:HGNC Symbol;Acc:HGNC:6968]	618	-0.6299235224723816	0.07810105	No	

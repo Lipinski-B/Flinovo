@@ -1,0 +1,224 @@
+---
+html_document: default
+title: "scRepertoire"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+suppressMessages(library(scRepertoire))
+suppressMessages(library(Seurat))
+library(stringr)
+library(processx)
+library(rmarkdown)
+library(plotly)
+csv1 <- list(read.csv(paste0("/home/boris/Documents/lipinskib/flinovo/result/FL12C1888/VDJ/FL12C1888_CellrangerVDJ/outs/filtered_contig_annotations.csv"), stringsAsFactors = FALSE))
+csv2 <- list(read.csv(paste0("/home/boris/Documents/lipinskib/flinovo/result/FL140304/VDJ/FL140304_CellrangerVDJ/outs/filtered_contig_annotations.csv"), stringsAsFactors = FALSE))
+csv11 <- list(read.csv(paste0("/home/boris/Documents/lipinskib/flinovo/result/FL09C1164/VDJ/CellrangerVDJ/outs/filtered_contig_annotations.csv"), stringsAsFactors = FALSE))
+csv22 <- list(read.csv(paste0("/home/boris/Documents/lipinskib/flinovo/result/FL08G0293/VDJ/FL08G0293_CellrangerVDJ/outs/filtered_contig_annotations.csv"), stringsAsFactors = FALSE))
+csv3 <- list(read.csv("/home/boris/Documents/lipinskib/flinovo/result/hFL_180008B/hFL_180008B_CellrangerVDJ/outs/filtered_contig_annotations.csv", stringsAsFactors = FALSE))
+csv4 <- list(read.csv("/home/boris/Documents/lipinskib/boris/Cellranger/result/hFL_130337/VDJ/hFL_130337_CellrangerVDJ/outs/filtered_contig_annotations.csv", stringsAsFactors = FALSE))
+
+combined <- combineBCR(c(csv1,csv2,csv11,csv22,csv3,csv4), 
+                       samples = c("12","14","9","8","T18","T13"), 
+                       ID = c("BCR","BCR","BCR","BCR","BCR","BCR"))
+```
+
+clonotype calling is not incorporating small variations within the CDR3 sequences.
+the most specific for clonotypes being gene+nt
+Using the 10x approach, there is a subset of barcodes that only return one of the immune receptor chains, the unreturned chain is assigned an NA value.
+
+
+The first function to explore the clonotypes is quantContig() to return the total or relative numbers of unique clonotypes.
+
+
+```{r quantContig_output, echo=FALSE}
+fig <- quantContig(combined, cloneCall="gene+nt", scale = TRUE)
+fig
+quantContig_output <- quantContig(combined, cloneCall="gene+nt", scale = TRUE, exportTable = TRUE)
+quantContig_output
+
+```
+
+We can also examine the relative distribution of clonotypes by abundance. Here abundanceContig() will produce a line graph with a total number of clonotypes by the number of instances within the sample or run.
+
+```{r abundanceContig, echo=FALSE}
+abundanceContig(combined, cloneCall = "gene", scale = F)
+abundanceContig(combined, cloneCall = "gene", exportTable = T)
+```
+
+
+lengtheContig() : the length distribution of the CDR3 sequences
+
+```{r lengthContig, echo=FALSE}
+lengthContig(combined, cloneCall="aa", chains = "combined") 
+lengthContig(combined, cloneCall="nt", chains = "single") 
+```
+
+
+We can also look at clonotypes between samples and changes in dynamics by using the compareClonotypes() function.
+
+```{r compareClonotypes, echo=FALSE}
+compareClonotypes(combined, numbers = 10, samples = c("12_BCR", "14_BCR","8_BCR", "9_BCR","T18_BCR","T13_BCR"), cloneCall="aa", graph = "alluvial")
+compareClonotypes(combined, numbers = 10, samples = c("12_BCR", "14_BCR","8_BCR", "9_BCR","T18_BCR","T13_BCR"), cloneCall="gene+nt", graph = "alluvial")
+```
+before : vizualizing contigs
+5 More Advanced Clonal Analysis
+
+Clonal Space Homeostasis = the relative space occupied by clones at specific proportions
+
+```{r clonalHomeostasis, echo=FALSE}
+clonalHomeostasis(combined, cloneCall = "gene")
+clonalHomeostasis(combined, cloneCall = "aa")
+clonalHomeostasis(combined, cloneCall = "gene+nt")
+```
+Clonal Proportion 
+The split represents ranking of clonotypes by copy or frequency of occurrence, meaning 1:10 are the top 10 clonotypes in each sample. The default bins are under the split variable in the function and can be adjusted, but at baseline they are as follows.
+
+
+```{r clonalProportion, echo=FALSE}
+clonalProportion(combined, cloneCall = "gene") 
+clonalProportion(combined, cloneCall = "nt") 
+clonalProportion(combined, cloneCall = "gene+nt") 
+```
+
+Overlap Analysis
+The former is looking at the overlap of clonotypes scaled to the length of unique clonotypes in the smaller sample
+
+```{r clonalOverlap, echo=FALSE}
+clonalOverlap(combined, cloneCall = "gene+nt", method = "overlap")
+```
+to cluster the samples by the clone size distribution 
+```{r clonesizeDistribution, echo=FALSE}
+clonesizeDistribution(combined, cloneCall = "gene+nt", method="ward.D2")
+```
+ Diversity Analysis
+
+```{r clonalDiversity, echo=FALSE}
+clonalDiversity(combined, cloneCall = "gene", group = "samples")#,n.boots = 100)
+clonalDiversity(combined, cloneCall = "gene", group = "ID")
+```
+
+
+
+
+ Interacting with Seurat
+
+
+```{r seurat, echo=FALSE}
+seurat <- get(load(file = "/home/boris/Documents/analyse/singlet_FL08G0293.RData"))
+DimPlot(seurat, label = T,  reduction = "pca") + NoLegend()
+table(Idents(seurat))
+
+
+combined$`8_BCR`$barcode <- str_replace(combined$`8_BCR`$barcode,"8_BCR_","")
+
+seurat <- combineExpression(combined, seurat, 
+            cloneCall="gene+nt", groupBy = "sample", proportion = FALSE, 
+            cloneTypes=c(Single=1, Small=5, Medium=20, Large=100, Hyperexpanded=500))
+
+```
+
+```{r seurat2, echo=FALSE}
+clonalOverlay(seurat, reduction = "umap", 
+              freq.cutpoint = 30, bins = 10)+#, facet = "Patient") + 
+                guides(color = FALSE)
+
+seurat <- highlightClonotypes(seurat, cloneCall= "aa", sequence = c("CSRVGSCGGLGCPHYDYW_CQQYTSYPLTF", "CSRVGSCGGLGCPHYDYW_CQQYSSYPLTF", "CSRVGSCGGLGCPHNDYW_CQQYTSYPLTF", "NA_CQQYTSYPLTF"))
+table(seurat@meta.data$CTaa)
+DimPlot(seurat, group.by = "highlight",  reduction = "pca")
+
+```
+```{r final2, echo=FALSE}
+
+```
+occupiedscRepertoire
+
+```{r seurat3, echo=FALSE}
+occupiedscRepertoire(seurat, x.axis = "Condition")
+```
+
+```{r seurat4, echo=FALSE}
+colorblind_vector <- colorRampPalette(c("#FF4B20", "#FFB433","#C6FDEC", "#7AC5FF", "#0348A6"))
+alluvialClonotypes(seurat, cloneCall = "gene", 
+                   y.axes = c("Condition", "clonotype_id"), 
+                   color = "TRAV12-2.TRAJ42.TRAC_TRBV20-1.TRBJ2-3.TRBD2.TRBC2") + 
+    scale_fill_manual(values = c("grey", colorblind_vector(1)))
+
+
+alluvialClonotypes(seurat, cloneCall = "gene", 
+                   y.axes = c("Condition", "clonotype_id", "seurat_clusters"), 
+                   color = "seurat_clusters") 
+```
+
+
+
+
+visualize the interconnection of clusters using the chord diagrams 
+
+
+
+
+```{r final, echo=FALSE}
+suppressPackageStartupMessages(library(circlize))
+library(scales)
+
+circles <- getCirclize(seurat, groupBy = "seurat_clusters")
+
+#Just assigning the normal colors to each cluster
+grid.cols <- scales::hue_pal()(length(unique(seurat@active.ident)))
+names(grid.cols) <- levels(seurat@active.ident)
+
+#Graphing the chord diagram
+circlize::chordDiagram(circles, self.link = 1, grid.col = grid.cols)
+```
+```{r}
+subset <- subset(seurat, Phénotype == "B-cells")
+
+circles <- getCirclize(subset, groupBy = "seurat_clusters")
+
+
+grid.cols <- hue_pal()(length(unique(subset@active.ident)))
+names(grid.cols) <- levels(subset@active.ident)
+chordDiagram(circles, self.link = 1, grid.col = grid.cols)
+```
+
+
+
+
+
+
+## Workflow
+
+ 1. Clonal Diversity
+```{r}
+combined2 <- expression2List(seurat, group = "Condition")
+length(combined2) #now listed by cluster
+clonalDiversity(combined2, cloneCall = "nt")
+```
+
+
+2. Clonal Homeostasis
+
+```{r}
+clonalHomeostasis(combined2, cloneCall = "nt")
+```
+
+
+ 3. Clonal Proportion
+ 
+```{r}
+clonalProportion(combined2, cloneCall = "nt")
+```
+
+ 4. Clonal Overlap
+ 
+ 
+```{r}
+clonalOverlap(combined2, cloneCall="aa", method="overlap")
+```
+ 
+ 

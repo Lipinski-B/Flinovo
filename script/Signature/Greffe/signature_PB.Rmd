@@ -1,0 +1,183 @@
+---
+title: "Signature de la greffe"
+author: "LIPINSKI Boris"
+date: '2022-04-01'
+output:
+  rmdformats::readthedown:
+    code_folding: hide
+    fig.width: 9
+    fig.height: 7
+    toc_depth: 3
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+path <- "/home/boris/Bureau/Flinovo/"
+path.meta <- "/media/boris/bae7e14e-21e5-48b8-80d6-f94583367b83/Flinovo/analyse_meta/"
+path.patient <- "/media/boris/bae7e14e-21e5-48b8-80d6-f94583367b83/Flinovo/analyse_patient/"
+source(file = paste0(path,"fonction/library.R"))
+source(file = paste0(path,"fonction/workflow.R"))
+source(file = paste0(path,"fonction/aggregate.R"))
+source(file = "/home/boris/Documents/lipinskib/boris/Labo/Jarid2/ATACseq/script/Functions_ATAC_v4.R")
+library(pheatmap)
+library(scater)
+annotations <- read.csv(paste0(path,"document/annotation.csv"))
+FC <- 1.189207 #log2(FC) = 0.25 ; FC = 2^0.25 = 1.189207
+# means that the expression of that gene is increased in WT relative to KO by a multiplicative factor of 2^log(FC) ≈ FC
+
+# EdgeR 
+condition <- "Pre-greffe-Excipient" ; phénotype <- "B" ; 
+load(file = paste0(path.meta,"All_",condition,"_",phénotype,".RData")) ; singlet <- noig(singlet)
+DefaultAssay(singlet) <- "RNA" ; Idents(singlet) <- "Condition"
+singlet@meta.data$Condition <- stringr::str_replace(singlet@meta.data$Condition, "Pre-greffe", "Pregreffe")
+
+sc <- PB(singlet)
+sc.EdgeR <- RNAseq(sc[["cluster_counts"]], sc[["cluster_metadata"]], sc[["cluster_metadata"]]$Condition)
+sc.EdgeR <- EdgeR(sc.EdgeR, model.matrix(~ Sample+Condition, data=sc.EdgeR$samples), lfc = FC)
+signature.EdgeR.PB.RCHOP <- rownames(sc.EdgeR[["tr"]]$table[sc.EdgeR[["tr"]]$table$FDR < 0.05,])
+#Dimension de la matrice de comptage : `r dim(counts)[1]` gènes exprimés x `r dim(counts)[2]` souris.
+```
+
+# Pseudo-Bulk
+
+## Effet greffe total
+
+### Liste des gènes différentiellement exprimés
+
+```{r echo=F}
+result.greffe <- signif(as.data.frame(sc.EdgeR[['result']][,c("logFC", "PValue", "FDR")]),3)
+DT::datatable(result.greffe, class = 'cell-border stripe')
+signature.greffe <- rownames(result.greffe)
+```
+
+### Figure
+
+```{r echo=F, fig.width=9, fig.height=11}
+Clustering(sc.EdgeR) ## Clustering
+PCA_edger(sc.EdgeR) ## PCA
+Top20(sc.EdgeR,30) ## Top20 des genes les plus différentiellement exprimés
+Volcano_plot(sc.EdgeR, xscale = 4.5, yscale = 10, FC=1, seuil=0.6) ## Volcano plot : FDRvsFC & FCvsCPM
+#MD_plot(sc.EdgeR, xscale = 15)
+TopHeatmap(sc.EdgeR, FDR=0.001, FC=3.5, col = colnames(sc.EdgeR[['y']])) ## Heatmap : Tous les DEGs
+TopHeatmap(sc.EdgeR, FDR=0.1, FC=0.5, row = F, col = colnames(sc.EdgeR[['y']])) ## Heatmap : Top DEGs
+```
+
+## Effet greffe sans l'effet subtilisine & des databases (union FL + union DB papiers)
+
+```{r echo=F, message=FALSE}
+load("/home/boris/Bureau/Flinovo/script/Signature/Greffe/DB/diss.gene.union")
+singlet@assays$RNA@data <- singlet@assays$RNA@data[rownames(singlet@assays$RNA@data)[!(rownames(singlet@assays$RNA@data) %in% diss.gene.union)],];
+singlet@assays$RNA@scale.data <- singlet@assays$RNA@scale.data[rownames(singlet@assays$RNA@scale.data)[!(rownames(singlet@assays$RNA@scale.data) %in% diss.gene.union)],];
+singlet@assays$RNA@counts <- singlet@assays$RNA@counts[rownames(singlet@assays$RNA@counts)[!(rownames(singlet@assays$RNA@counts) %in% diss.gene.union)],];
+
+sc <- PB(singlet)
+sc.EdgeR <- RNAseq(sc[["cluster_counts"]], sc[["cluster_metadata"]], sc[["cluster_metadata"]]$Condition)
+sc.EdgeR <- EdgeR(sc.EdgeR, model.matrix(~ Sample+Condition, data=sc.EdgeR$samples), lfc = FC)
+signature.EdgeR.PB.RCHOP <- rownames(sc.EdgeR[["tr"]]$table[sc.EdgeR[["tr"]]$table$FDR < 0.05,])
+```
+
+### Liste des gènes différentiellement exprimés
+
+```{r echo=F}
+result.greffe2 <- signif(as.data.frame(sc.EdgeR[['result']][,c("logFC", "PValue", "FDR")]),3)
+DT::datatable(result.greffe2, class = 'cell-border stripe')
+signature.greffe2 <- rownames(result.greffe2)
+```
+
+### Figures
+
+```{r echo=F, fig.width=9, fig.height=11}
+Clustering(sc.EdgeR) ## Clustering
+PCA_edger(sc.EdgeR) ## PCA
+Top20(sc.EdgeR,30) ## Top20 des genes les plus différentiellement exprimés
+Volcano_plot(sc.EdgeR, xscale = 4.5, yscale = 10, FC=1, seuil=0.6) ## Volcano plot : FDRvsFC & FCvsCPM
+#MD_plot(sc.EdgeR, xscale = 15)
+TopHeatmap(sc.EdgeR, FDR=0.001, FC=3.5, col = colnames(sc.EdgeR[['y']])) ## Heatmap : Tous les DEGs
+TopHeatmap(sc.EdgeR, FDR=0.1, FC=0.5, row = F, col = colnames(sc.EdgeR[['y']])) ## Heatmap : Top DEGs
+```
+
+# Single-Cell
+
+## PCA
+
+```{r}
+Condition <- "Condition"; item1 <- "Pregreffe"; item2 <- "Excipient"; 
+Seurat::DimPlot(object = singlet, group.by = "Condition", label.size = 5, pt.size = 1,reduction = "pca", label = T) & Seurat::NoLegend() & 
+  xlab(label = paste0("PCA 1 : ", round(Seurat::Stdev(singlet[["pca"]])[1],2), " %")) & ylab(label = paste0("PCA 2 : ", round(Seurat::Stdev(singlet[["pca"]])[2],2), " %"))
+```
+
+## Liste des gènes différentiellement exprimés
+
+```{r}
+item1 <- "Pre-greffe";
+
+# RNA
+singlet <- NormalizeData(singlet, assay = "RNA")
+singlet <- ScaleData(singlet, features = rownames(singlet))
+response <- FindMarkers(singlet, ident.1 = item1, ident.2 = item2 , logfc.threshold = log2(FC), assay = "RNA", slot = "data")
+
+response <- response %>% rownames_to_column(var="gene") %>% left_join(y = unique(annotations[, c("gene_name", "description")]), by = c("gene" = "gene_name")) %>% as_tibble(response) 
+response1 <- signif(as.data.frame(response[,c("p_val", "avg_log2FC", "p_val_adj")]),3)
+response <- cbind(response1, response[,c("gene", "pct.1", "pct.2", "description")])
+response <- response[,c("gene", "p_val", "avg_log2FC", "pct.1", "pct.2", "p_val_adj", "description")]
+colnames(response) <- c("genes", "p_val", "logFC", "pct.1", "pct.2", "FDR", "description")
+
+response[response$logFC > 0.15 & response$FDR < 0.05, "Expression"] <- "Up"
+response[response$logFC < -0.15 & response$FDR < 0.05, "Expression"] <- "Down"
+response[response$FDR >= 0.05,  "Expression"] <- "Not Sig"
+response[response$logFC > -0.15 & response$logFC < 0.15, "Expression"] <- "Not Sig"
+
+DT::datatable(response, class = 'cell-border stripe')
+```
+
+## Volcano plot : FDRvsFC
+
+```{r, warning=FALSE}
+data <- response
+FC=0.25 ; xscale = 1 ; yscale=350 ; seuil=0.25 ; label=NULL
+if(length(unique(data$Expression))==2){color = c("grey","#F8766D")}else{color = c("#619CFF","grey","#F8766D")}
+if(is.null(label)){filter <- data %>% filter(-log10(data$FDR)>1.2 & abs(data$logFC)>FC)}else{filter <- data %>% filter(data$genes %in% label & -log10(data$FDR)>1.2 & abs(data$logFC)>FC)}
+
+ggplot(data) +
+  geom_point(aes(x = logFC, y = -log10(FDR), colour = Expression)) + 
+  ggrepel::geom_label_repel(data=filter, aes(label=genes, x = logFC, y = -log10(FDR))) +
+  ggtitle("\nVolcano plot WT vs KO : FDR < 0.05 & logFC > 1.2\n") + xlab("log2 FC") + ylab("-log10 FDR") +
+  scale_x_continuous(limits = c(-xscale,xscale)) + scale_y_continuous(limits = c(0,yscale)) + scale_color_manual(values = color) + 
+  geom_hline(yintercept=1.30103, col="black", linetype="dashed") + geom_vline(xintercept=c(-seuil,seuil), col="black", linetype="dashed") +
+  theme_classic() + theme(plot.title = element_text(size = rel(1.5), hjust = 0.5), axis.title = element_text(size = rel(1))) 
+```
+
+## Heatmap : Tous les DEGs
+
+```{r, warning=FALSE, fig.width=9, fig.height=12}
+DoHeatmap(singlet, features = response$genes[1:200], group.by = "Condition", slot = "scale.data", assay = "integrated")
+```
+
+# Intersection
+
+## Venn Diagram
+
+```{r, echo=FALSE, message=FALSE, error=FALSE}
+library(ggVennDiagram)
+x <- list(PseudoBulk2 = signature.greffe2, SingleCell = response$genes)
+ggVennDiagram(x, category.names = c("PseudoBulk","SingleCell"), label_alpha = 1, label = "count") +
+  scale_fill_gradient(low="white",high = "white") + theme(legend.position = "none") + ggtitle("DE list intersection") + theme(plot.title = element_text(hjust = 0.5))
+```
+
+## Liste
+
+```{r}
+intersect(response$genes, signature.greffe2)
+
+# Pseudo-bulk + All
+# norm_counts <- calcNormFactors(sc.EdgeR$y, method = "TMM")
+# norm_counts <- as.data.frame(cpm(norm_counts, log=TRUE, prior.count = 1)[intersect(response$genes, signature.greffe2),])
+# norm_counts$names <- norm_counts$description <- rownames(norm_counts)
+# final <- norm_counts[,c("names", "description",
+#   "FL02G095Excipient", "FL06G1206Excipient", "FL05G0330Excipient","FL08G0293Excipient","FL08G0404Excipient","FL08G0431Excipient","FL09C1164Excipient","FL12C1888Excipient","FL140304Excipient",
+#   "FL02G095Pregreffe", "FL06G1206Pregreffe", "FL05G0330Pregreffe","FL08G0293Pregreffe","FL08G0404Pregreffe","FL08G0431Pregreffe","FL09C1164Pregreffe","FL12C1888Pregreffe","FL140304Pregreffe")]
+# write.table(final, file='/home/boris/Bureau/Flinovo/script/Signature/Greffe/GSEA/signature_greffe.gct', quote=FALSE, sep='\t', row.names = F) #1.2  16637    6
+# dim(final)
+```

@@ -1,0 +1,181 @@
+---
+title: "RCHOP Signature"
+author: "LIPINSKI Boris"
+date: '2022-04-01'
+output:
+  rmdformats::readthedown:
+    code_folding: hide
+    fig.width: 9
+    fig.height: 7
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+path <- "/home/boris/Bureau/Flinovo/"
+path.meta <- paste0(path,"result/analyse_meta/")
+path.patient <- paste0(path,"result/analyse_patient/")
+source(file = paste0(path,"fonction/library.R"))
+source(file = paste0(path,"fonction/workflow.R"))
+source(file = paste0(path,"fonction/aggregate.R"))
+
+work="/home/boris/Documents/lipinskib/boris"
+source(paste0(work,"/ATACseq/script/Functions_ATAC_v4.R"))
+
+library(pheatmap)
+condition <- "Post-greffe"
+phénotype <- "B"
+load(file = paste0(path.meta,"All_",condition,"_",phénotype,".RData"))
+singlet <- noig(singlet)
+DefaultAssay(singlet) <- "RNA"
+Idents(singlet) <- "Condition"
+```
+
+# Modèle multivarié en bulk avec aggregateBioVar
+```{r Load, echo=F}
+# aggregateBioVar
+singlet@meta.data$ID <- paste0(singlet@meta.data$Sample,"_",singlet@meta.data$Condition)
+singlet.sce <- as.SingleCellExperiment(singlet)
+singlet.sce <- aggregateBioVar(scExp = singlet.sce, subjectVar = "ID", cellVar = "Phénotype")
+
+# Load symbol
+counts <- assay(singlet.sce$`B cells`, "counts")
+metadata <- colData(singlet.sce$`B cells`)
+group <- factor(metadata$Condition, levels = c("Excipient", "RCHOP"))
+symbol <- readRDS('/home/boris/Documents/lipinskib/boris/RNAseq/result/edgeR/symbol.Rds')
+symbol <- symbol[!duplicated(symbol$hgnc_symbol),] ; rownames(symbol) <- symbol$hgnc_symbol ; symbol$hgnc_symbol <- NULL
+
+counts <- merge(counts, symbol, by=0) ; rownames(counts) <- counts$Row.names ; counts$Row.names <- NULL
+
+# Missing gene symbol identification : replace '' by ENSMUS...
+symbol.missing <- c(rownames(counts)[counts$hgnc_symbol==''], rownames(counts)[is.na(counts$hgnc_symbol)])
+symbol.missing <- symbol.missing[!is.na(symbol.missing)]
+for (name in symbol.missing){counts[name,"hgnc_symbol"] <- name}
+
+# Duplicate gene symbol identification : replace 'symbol'*2 by 'symbol.1' & 'symbol.2'
+symbol.duplicate <- names(which(table(counts$hgnc_symbol)>1))
+for (name in symbol.duplicate[nchar(symbol.duplicate)>1]){
+  gene <- rownames(counts)[counts$hgnc_symbol==name]
+  gene <- gene[!is.na(gene)]
+  counts[gene[1],"hgnc_symbol"] <- paste0(name,".1")
+  counts[gene[2],"hgnc_symbol"] <- paste0(name,".2")
+}
+
+counts$mgi_symbol <- rownames(counts)
+counts[,c('mgi_symbol','entrezgene_id')] <- NULL
+```
+
+Dimension de la matrice de comptage : `r dim(counts)[1]` gènes exprimés x `r dim(counts)[2]` souris.
+
+
+
+## EdgeR
+### Processing 
+```{r Convert, echo=F}
+sc.EdgeR <- RNAseq(counts, metadata, group, symbol)
+sc.EdgeR <- EdgeR(sc.EdgeR, model.matrix(~ Sample+Condition, data=sc.EdgeR$samples))
+signature.EdgeR <- rownames(sc.EdgeR[["tr"]]$table[sc.EdgeR[["tr"]]$table$FDR < 0.05,])
+```
+
+### Clustering
+```{r echo=F, warning=F, fig.width=9, fig.height=8}
+Clustering(sc.EdgeR)
+```
+
+### PCA
+```{r echo=F}
+plotMDS(sc.EdgeR[["y"]], col=as.numeric(sc.EdgeR[["y"]]$samples$group), pch=20, cex = 3) 
+legend("left", as.character(unique(sc.EdgeR[["y"]]$samples$group)), col=1:3, pch=20)
+
+PCA_edger(sc.EdgeR)
+```
+
+### Liste des gènes différentiellement exprimés 
+```{r echo=F}
+DT::datatable(as.data.frame(sc.EdgeR[["result"]][,c(-13)]), class = 'cell-border stripe')
+```
+- Nombre de DEGs : `r sum(sc.EdgeR[["tr"]]$table$FDR < 0.05)` (FDR > 0.05 & logFC > 1.2)
+- Nombre de gènes up-régulés dans les KO : `r summary(decideTests(sc.EdgeR[["tr"]]))[3]`
+- Nombre de gènes down-régulés dans les KO : `r summary(decideTests(sc.EdgeR[["tr"]]))[1]`
+- logFC positif = up-régulé dans les KO / down régulé dans les WT
+- logFC négatif = up-régulé dans les WT / down régulé dans les KO
+
+### Top20 des genes les plus différentiellement exprimés
+```{r echo=F, warning=F, fig.width=10, fig.height=8}
+Top20(sc.EdgeR,30)
+```
+
+### Volcano plot : FDRvsFC & FCvsCPM
+```{r echo=F, warning=F, message=F}
+Volcano_plot(sc.EdgeR, FC = 0.6)
+MD_plot(sc.EdgeR)
+```
+
+### Heatmap : Tous les DEGs
+```{r echo=F, fig.width=9, fig.height=11}
+col <- c("FL08G0293_Excipient", "FL09C1164_Excipient", "FL05G0330_Excipient", "FL140304_Excipient", "FL02G095_Excipient", "FL12C1888_Excipient", "FL08G0431_Excipient", "FL06G1206_Excipient", "FL08G0404_Excipient", 
+         "FL08G0293_RCHOP",     "FL09C1164_RCHOP",     "FL05G0330_RCHOP",     "FL140304_RCHOP",     "FL02G095_RCHOP",     "FL12C1888_RCHOP",     "FL08G0431_RCHOP",     "FL06G1206_RCHOP",     "FL08G0404_RCHOP")
+row <- c("Condition","Reponse", "Sample")
+annotation_col = as.data.frame(metadata[col,row]) ; rownames(annotation_col) <- col ; colnames(annotation_col) <- row
+TopHeatmap(sc.EdgeR, 1, 0.0001, T, annotation_col, F, col)
+```
+
+### Heatmap : Top DEGs
+```{r echo=F, fig.width=9, fig.height=11}
+TopHeatmap(sc.EdgeR, 0.001, 0.8, T, annotation_col, F, col)
+```
+
+
+## DESeq2
+### Processing 
+```{r}
+sc.DESeq <- DESeq2(counts, metadata, 0.25)
+signature.DESeq2 <- sc.DESeq[['result']]$table
+```
+
+### Clustering
+```{r}
+rld <- DESeq2::rlog(sc.DESeq[['y']], blind = T) # Log2 Transformation & Normalisation
+rld.matrix <- SummarizedExperiment::assay(rld) ; rld.cor <- cor(rld.matrix, method = "pearson")
+pheatmap(rld.cor,main = "Clustering using rlog(read counts). \nDistance: Pearson correlation.",border_color=NA, fontsize = 10, fontsize_row = 10, height=20)
+```
+
+### PCA
+```{r}
+plotPCA(rld, intgroup = "Condition") + theme_bw() + ggtitle("Rlog transformed counts")
+plotPCA(rld, intgroup = "Sample") + theme_bw() + ggtitle("Rlog transformed counts")
+```
+
+### Liste des gènes différentiellement exprimés 
+```{r echo=F}
+r <- as.data.frame(signature.DESeq2[, c("logFC","PValue","FDR")])
+DT::datatable(signif(r,3), class = 'cell-border stripe')
+```
+
+### Top20 des genes les plus différentiellement exprimés
+```{r echo=F, warning=F, fig.width=10, fig.height=8}
+Top20(sc.DESeq,50)
+```
+
+### Volcano plot : FDRvsFC & FCvsCPM
+```{r}
+Volcano_plot(sc.DESeq, FC = 0.25, xscale=1, yscale=12, seuil=0.25)
+```
+
+### Heatmap : Tous les DEGs
+```{r echo=F, fig.width=9, fig.height=15}
+tmm <- rld.matrix[rownames(signature.DESeq2),col]
+annotation_col = as.data.frame(metadata[col,row]) ; rownames(annotation_col) <- col ; colnames(annotation_col) <- row
+pheatmap(tmm, show_rownames = T, main = "Supervised heatmap using log(CPM+1) read counts :\n101 DEGs", scale = "row", cluster_cols=FALSE, annotation_col = annotation_col)
+```
+
+### Heatmap : Top DEGs
+```{r echo=F, fig.width=9, fig.height=11}
+top <- tmm[rownames(signature.DESeq2)[signature.DESeq2$FDR<0.01 & abs(signature.DESeq2$logFC)>0.5],]
+pheatmap(top,show_rownames = TRUE, scale = "row",main = "Heatmap using log(TMM+1) read counts :\nmain DEGs (FDR<0.01 & logFC>1.5)\n", cluster_cols=FALSE, annotation_col = annotation_col)
+```
+
+```{r}
+Reduce(intersect, list(rownames(signature.DESeq2),signature.EdgeR))
+```
+

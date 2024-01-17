@@ -1,0 +1,16 @@
+NAME	SYMBOL	TITLE	RANK IN GENE LIST	RANK METRIC SCORE	RUNNING ES	CORE ENRICHMENT	
+row_0	CRYZ	crystallin zeta [Source:HGNC Symbol;Acc:HGNC:2419]	23	0.48093172907829285	0.08546764	Yes	
+row_1	PDHB	pyruvate dehydrogenase E1 subunit beta [Source:HGNC Symbol;Acc:HGNC:8808]	37	0.4256691038608551	0.17234667	Yes	
+row_2	PDHA1	pyruvate dehydrogenase E1 subunit alpha 1 [Source:HGNC Symbol;Acc:HGNC:8806]	77	0.33407899737358093	0.196567	Yes	
+row_3	LGALS1	galectin 1 [Source:HGNC Symbol;Acc:HGNC:6561]	103	0.3036331236362457	0.23452781	Yes	
+row_4	PCBD1	pterin-4 alpha-carbinolamine dehydratase 1 [Source:HGNC Symbol;Acc:HGNC:8646]	107	0.2999863922595978	0.3051621	Yes	
+row_5	DECR1	"2,4-dienoyl-CoA reductase 1 [Source:HGNC Symbol;Acc:HGNC:2753]"	113	0.2949018180370331	0.3714681	Yes	
+row_6	LDHA	lactate dehydrogenase A [Source:HGNC Symbol;Acc:HGNC:6535]	122	0.28413569927215576	0.43049458	Yes	
+row_7	SUCLG1	succinate-CoA ligase GDP/ADP-forming subunit alpha [Source:HGNC Symbol;Acc:HGNC:11449]	175	0.2391403168439865	0.411064	No	
+row_8	ACADM	acyl-CoA dehydrogenase medium chain [Source:HGNC Symbol;Acc:HGNC:89]	233	0.20777496695518494	0.3761357	No	
+row_9	SDHC	succinate dehydrogenase complex subunit C [Source:HGNC Symbol;Acc:HGNC:10682]	274	0.18396982550621033	0.36119303	No	
+row_10	MDH1	malate dehydrogenase 1 [Source:HGNC Symbol;Acc:HGNC:6970]	318	0.15950025618076324	0.33553505	No	
+row_11	GRHPR	glyoxylate and hydroxypyruvate reductase [Source:HGNC Symbol;Acc:HGNC:4570]	321	0.1583695262670517	0.372189	No	
+row_12	SDHD	succinate dehydrogenase complex subunit D [Source:HGNC Symbol;Acc:HGNC:10683]	325	0.15494036674499512	0.40645644	No	
+row_13	ELOVL5	ELOVL fatty acid elongase 5 [Source:HGNC Symbol;Acc:HGNC:21308]	395	-0.19485527276992798	0.34996822	No	
+row_14	GABARAPL1	GABA type A receptor associated protein like 1 [Source:HGNC Symbol;Acc:HGNC:4068]	455	-0.26652833819389343	0.3267175	No	

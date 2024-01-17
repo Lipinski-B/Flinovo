@@ -1,0 +1,36 @@
+NAME	SYMBOL	TITLE	RANK IN GENE LIST	RANK METRIC SCORE	RUNNING ES	CORE ENRICHMENT	
+row_0	CCT5	chaperonin containing TCP1 subunit 5 [Source:HGNC Symbol;Acc:HGNC:1618]	53	0.38291022181510925	-0.03398932	Yes	
+row_1	PRDX3	peroxiredoxin 3 [Source:HGNC Symbol;Acc:HGNC:9354]	60	0.3577108085155487	0.0027811266	Yes	
+row_2	HDAC2	histone deacetylase 2 [Source:HGNC Symbol;Acc:HGNC:4853]	67	0.34594735503196716	0.038031638	Yes	
+row_3	MRPS18B	mitochondrial ribosomal protein S18B [Source:HGNC Symbol;Acc:HGNC:14516]	79	0.33308354020118713	0.06374602	Yes	
+row_4	HPRT1	hypoxanthine phosphoribosyltransferase 1 [Source:HGNC Symbol;Acc:HGNC:5157]	108	0.2989681363105774	0.058280747	Yes	
+row_5	EIF2S1	eukaryotic translation initiation factor 2 subunit alpha [Source:HGNC Symbol;Acc:HGNC:3265]	117	0.28949031233787537	0.08308692	Yes	
+row_6	LDHA	lactate dehydrogenase A [Source:HGNC Symbol;Acc:HGNC:6535]	122	0.28413569927215576	0.113500446	Yes	
+row_7	NDUFAB1	NADH:ubiquinone oxidoreductase subunit AB1 [Source:HGNC Symbol;Acc:HGNC:7694]	134	0.2748112976551056	0.13168555	Yes	
+row_8	VBP1	VHL binding protein 1 [Source:HGNC Symbol;Acc:HGNC:12662]	145	0.25975558161735535	0.14950016	Yes	
+row_9	CCT3	chaperonin containing TCP1 subunit 3 [Source:HGNC Symbol;Acc:HGNC:1616]	149	0.25651073455810547	0.1779191	Yes	
+row_10	ERH	ERH mRNA splicing and mitosis factor [Source:HGNC Symbol;Acc:HGNC:3447]	168	0.24393314123153687	0.18109088	Yes	
+row_11	PTGES3	prostaglandin E synthase 3 [Source:HGNC Symbol;Acc:HGNC:16049]	207	0.2188986986875534	0.14953193	Yes	
+row_12	PSMC4	"proteasome 26S subunit, ATPase 4 [Source:HGNC Symbol;Acc:HGNC:9551]"	223	0.21190860867500305	0.15329027	Yes	
+row_13	G3BP1	G3BP stress granule assembly factor 1 [Source:HGNC Symbol;Acc:HGNC:30292]	227	0.21083417534828186	0.17580742	Yes	
+row_14	PHB	prohibitin [Source:HGNC Symbol;Acc:HGNC:8912]	229	0.20891694724559784	0.20122646	Yes	
+row_15	AP3S1	adaptor related protein complex 3 subunit sigma 1 [Source:HGNC Symbol;Acc:HGNC:2013]	231	0.2085336297750473	0.22659597	Yes	
+row_16	EPRS1	glutamyl-prolyl-tRNA synthetase 1 [Source:HGNC Symbol;Acc:HGNC:3418]	239	0.2049308717250824	0.24205114	Yes	
+row_17	PSMB2	proteasome 20S subunit beta 2 [Source:HGNC Symbol;Acc:HGNC:9539]	250	0.19922477006912231	0.25204465	Yes	
+row_18	PSMA4	proteasome 20S subunit alpha 4 [Source:HGNC Symbol;Acc:HGNC:9533]	253	0.1981627196073532	0.27449933	Yes	
+row_19	VDAC1	voltage dependent anion channel 1 [Source:HGNC Symbol;Acc:HGNC:12669]	256	0.19714349508285522	0.29682234	Yes	
+row_20	SSBP1	single stranded DNA binding protein 1 [Source:HGNC Symbol;Acc:HGNC:11317]	270	0.18548083305358887	0.3003156	Yes	
+row_21	PA2G4	proliferation-associated 2G4 [Source:HGNC Symbol;Acc:HGNC:8550]	272	0.18437138199806213	0.32256314	Yes	
+row_22	UBA2	ubiquitin like modifier activating enzyme 2 [Source:HGNC Symbol;Acc:HGNC:30661]	294	0.1737109273672104	0.3119372	Yes	
+row_23	PGK1	phosphoglycerate kinase 1 [Source:HGNC Symbol;Acc:HGNC:8896]	297	0.1715296357870102	0.33095068	Yes	
+row_24	PSMA2	proteasome 20S subunit alpha 2 [Source:HGNC Symbol;Acc:HGNC:9531]	301	0.16940146684646606	0.34811437	Yes	
+row_25	SNRPG	small nuclear ribonucleoprotein polypeptide G [Source:HGNC Symbol;Acc:HGNC:11163]	310	0.16464199125766754	0.35678908	Yes	
+row_26	PSMA1	proteasome 20S subunit alpha 1 [Source:HGNC Symbol;Acc:HGNC:9530]	327	0.1533336490392685	0.35140425	Yes	
+row_27	PCBP1	poly(rC) binding protein 1 [Source:HGNC Symbol;Acc:HGNC:8647]	330	0.15191137790679932	0.36788288	Yes	
+row_28	PSMA6	proteasome 20S subunit alpha 6 [Source:HGNC Symbol;Acc:HGNC:9535]	335	0.14767050743103027	0.38066393	Yes	
+row_29	CCT7	chaperonin containing TCP1 subunit 7 [Source:HGNC Symbol;Acc:HGNC:1622]	339	0.1419011801481247	0.39427435	Yes	
+row_30	RAN	"RAN, member RAS oncogene family [Source:HGNC Symbol;Acc:HGNC:9846]"	340	0.13614018261432648	0.41186482	Yes	
+row_31	RPL34	ribosomal protein L34 [Source:HGNC Symbol;Acc:HGNC:10340]	355	-0.10411148518323898	0.40326968	Yes	
+row_32	EIF4A1	eukaryotic translation initiation factor 4A1 [Source:HGNC Symbol;Acc:HGNC:3282]	360	-0.12574411928653717	0.41321766	Yes	
+row_33	SRSF3	serine and arginine rich splicing factor 3 [Source:HGNC Symbol;Acc:HGNC:10785]	387	-0.17775511741638184	0.39524025	No	
+row_34	SRSF2	serine and arginine rich splicing factor 2 [Source:HGNC Symbol;Acc:HGNC:10783]	519	-0.36591556668281555	0.23622043	No	

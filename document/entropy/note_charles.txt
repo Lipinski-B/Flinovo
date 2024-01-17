@@ -1,0 +1,34 @@
+integration, clustering, DE sur ancrage greffe pas greffe, différent cluster spéfic des traité non traité !
+
+faire les 2 : au niveau de l'ancrage, traité non traité, clustering habituel --> gène DE,
+
+entropy : calc par gène, nb de celle doit être strictement égale, pour comparer 2 emtropi = nombre de cellule pareil
+
+revu sur l'entropy en single cell, demandé a pierre
+moyenne de tout
+
+
+trajectoire : prise en compte de la reduction, DE au cours de trajectoire , TRADEseq, slingshot (inférence de trajectoire) : permet de voir les gene DE 
+
+velocito : patient par patient indépendemment! condition par condition! 
+scVélo : gène différenciellement exprimé
+
+phénotype
+
+cell-to-cell variability 
+
+nb de cellule : utiliser un bootstrap, poicher alétoirement et calculer 100 fois
+sampli a et b + test stat 
+
+pas en dessous de 30 cellules 
+cluster par cluster
+condition par contition
+
+gene par gene --> moyenne --> entropy de la cellule
+sur tout les gènes != un set de gene
+
+
+annotation phénotypique : intégré!!!!!!! + DE
+
+
+entropy(brute, raw count) velocito : patient par cocndition  
